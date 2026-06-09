@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Don't Get Got — Mission Dealer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --surface: #111116;
+    --card-bg: #16161d;
+    --border: #2a2a35;
+    --accent: #e8c44a;
+    --accent-dim: #a8882a;
+    --danger: #e84a4a;
+    --text: #e8e8f0;
+    --text-dim: #7a7a90;
+    --text-muted: #3a3a50;
+    --card-glow: rgba(232, 196, 74, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  header {
+    width: 100%;
+    max-width: 680px;
+    padding: 48px 24px 16px;
+    text-align: center;
+  }
+
+  .logo-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 10vw, 88px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 12px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .divider {
+    width: 100%;
+    max-width: 680px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 24px auto;
+  }
+
+  main {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Mission Cards */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .card:hover {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 24px var(--card-glow), inset 0 0 24px var(--card-glow);
+  }
+
+  .card.special {
+    border-color: var(--accent-dim);
+    background: linear-gradient(135deg, #1a1a10 0%, var(--card-bg) 60%);
+  }
+
+  .card.special::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .card-inner {
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .card-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--text-muted);
+    min-width: 32px;
+    margin-top: 2px;
+    transition: color 0.2s;
+  }
+
+  .card:hover .card-number {
+    color: var(--accent-dim);
+  }
+
+  .card.special .card-number {
+    color: var(--accent);
+  }
+
+  .card-content {
+    flex: 1;
+  }
+
+  .card-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .card.special .card-tag {
+    color: var(--accent-dim);
+  }
+
+  .card-mission {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .card-mission strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Crossed out state */
+  .card.completed {
+    opacity: 0.4;
+  }
+
+  .card.completed .card-mission {
+    text-decoration: line-through;
+    text-decoration-color: var(--danger);
+  }
+
+  .card-x {
+    position: absolute;
+    top: 12px; right: 14px;
+    width: 24px; height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .card-x:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(232, 74, 74, 0.08);
+  }
+
+  .card.completed .card-x {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(232, 74, 74, 0.12);
+  }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 3px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .btn-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-ghost {
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  /* Counter bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .status-bar .live {
+    color: var(--accent);
+  }
+
+  .pips {
+    display: flex;
+    gap: 4px;
+  }
+
+  .pip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .pip.active {
+    background: var(--accent);
+  }
+
+  .pip.done {
+    background: var(--danger);
+  }
+
+  /* Got badge */
+  .got-banner {
+    display: none;
+    text-align: center;
+    padding: 24px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: var(--danger);
+    letter-spacing: 0.1em;
+    animation: pulse 1s ease infinite alternate;
+  }
+
+  .got-banner.show { display: block; }
+
+  @keyframes pulse {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
+
+  footer {
+    padding: 0 24px 40px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-eyebrow">Secret Mission Briefing</div>
+  <h1>Don't<br>Get <span>Got</span></h1>
+  <p class="subtitle">Deal your missions. Keep them secret. Don't get caught.</p>
+</header>
+
+<div class="divider"></div>
+
+<main>
+  <div class="status-bar">
+    <span>MISSIONS ACTIVE: <span class="live" id="activeCount">6</span> / 6</span>
+    <div class="pips" id="pips"></div>
+  </div>
+
+  <div id="cardStack"></div>
+
+  <div class="got-banner" id="gotBanner">⚠ YOU GOT GOT ⚠</div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="dealNew()">↻ New Hand</button>
+    <button class="btn btn-ghost" onclick="resetCompleted()">Reset Crossed</button>
+  </div>
+</main>
+
+<footer>Fan-made companion app · Don't Get Got by Big Potato Games</footer>
+
+<script>
+const MISSIONS = [
+  // Physical gestures
+  "Get someone to do a <strong>high five</strong> with you.",
+  "Get someone to <strong>shake your hand</strong>.",
+  "Get someone to <strong>give you a thumbs up</strong>.",
+  "Get someone to <strong>do a fist bump</strong> with you.",
+  "Get someone to <strong>link arms with you</strong>.",
+  "Get someone to <strong>fold their arms</strong>.",
+  "Get someone to put both <strong>hands on their head</strong>.",
+  "Get someone to <strong>stand on one leg</strong> for 3 seconds.",
+  "Get someone to <strong>do a spin</strong> in place.",
+  "Get someone to <strong>snap their fingers</strong>.",
+  "Get someone to <strong>clap their hands</strong> at least twice.",
+  "Get someone to <strong>tap their foot</strong> on the ground.",
+  "Get someone to <strong>pat you on the back</strong>.",
+  "Get someone to <strong>do a stretch</strong> of any kind.",
+  "Get someone to <strong>cross their legs</strong> while sitting.",
+  "Get someone to <strong>flex their arm</strong> like a bodybuilder.",
+  "Get someone to <strong>do a bow</strong> or curtsy.",
+  "Get someone to <strong>touch their toes</strong> (or attempt to).",
+  "Get someone to <strong>give you a fist bump AND explosion</strong> after.",
+  "Get someone to <strong>do a thumbs down</strong>.",
+  "Get someone to <strong>mime pulling a rope</strong>.",
+  "Get someone to <strong>do a salute</strong>.",
+  "Get someone to <strong>wiggle their fingers</strong> in the air.",
+  "Get someone to <strong>put their hand on their heart</strong>.",
+  "Get someone to <strong>crack their knuckles</strong>.",
+
+  // Eye / face actions
+  "Get someone to <strong>look at the sky</strong> or ceiling for at least 3 seconds.",
+  "Get someone to <strong>close their eyes</strong> for at least 3 seconds.",
+  "Get someone to <strong>yawn</strong>.",
+  "Get someone to <strong>wink at you</strong>.",
+  "Get someone to <strong>raise one eyebrow</strong>.",
+  "Get someone to <strong>pull a funny face</strong>.",
+  "Get someone to <strong>blow a kiss</strong>.",
+  "Get someone to <strong>stick out their tongue</strong>.",
+  "Get someone to <strong>look behind them</strong> suddenly.",
+  "Get someone to <strong>squint their eyes</strong> like they're suspicious.",
+  "Get someone to <strong>mime being shocked</strong> — wide eyes, hands on cheeks.",
+
+  // Words & phrases
+  "Get someone to <strong>say your name</strong>.",
+  "Get someone to <strong>say a number above 10</strong>.",
+  "Get someone to <strong>say the word \"definitely\"</strong>.",
+  "Get someone to <strong>say the word \"please\"</strong>.",
+  "Get someone to <strong>say yes</strong> twice in a row.",
+  "Get someone to <strong>mention food</strong> in conversation.",
+  "Get someone to <strong>say the word \"absolutely\"</strong>.",
+  "Get someone to <strong>say the word \"interesting\"</strong>.",
+  "Get someone to <strong>say a colour</strong> out loud.",
+  "Get someone to <strong>say an animal name</strong>.",
+  "Get someone to <strong>say the word \"actually\"</strong>.",
+  "Get someone to <strong>say a country name</strong>.",
+  "Get someone to <strong>say the word \"amazing\"</strong>.",
+  "Get someone to <strong>say the word \"basically\"</strong>.",
+  "Get someone to <strong>say a celebrity's name</strong>.",
+  "Get someone to <strong>say \"I promise\"</strong>.",
+  "Get someone to <strong>say a word longer than 4 syllables</strong>.",
+  "Get someone to <strong>say the word \"weird\"</strong>.",
+  "Get someone to <strong>say \"good point\"</strong>.",
+  "Get someone to <strong>say \"no way\"</strong>.",
+  "Get someone to <strong>say a number in a foreign language</strong>.",
+
+  // Sounds & noises
+  "Get someone to <strong>hum a tune</strong>.",
+  "Get someone to <strong>count out loud</strong> to at least 5.",
+  "Get someone to <strong>whisper something</strong> in your ear.",
+  "Get someone to <strong>make an animal sound</strong>.",
+  "Get someone to <strong>beatbox</strong> for at least 2 seconds.",
+  "Get someone to <strong>whistle</strong> (or attempt to).",
+  "Get someone to <strong>make a sound effect</strong> for an explosion.",
+  "Get someone to <strong>sing one word</strong> of any song.",
+  "Get someone to <strong>laugh out loud</strong>.",
+  "Get someone to <strong>make a siren sound</strong> with their voice.",
+  "Get someone to <strong>do a dramatic gasp</strong>.",
+
+  // Movements & positions
+  "Get someone to <strong>sit down somewhere new</strong>.",
+  "Get someone to <strong>wave goodbye</strong> to you.",
+  "Get someone to <strong>point at something</strong> in the room.",
+  "Get someone to <strong>check the time</strong> on their phone or a clock.",
+  "Get someone to <strong>walk backwards</strong> at least three steps.",
+  "Get someone to <strong>tiptoe</strong> for at least 3 steps.",
+  "Get someone to <strong>jump</strong> at least once.",
+  "Get someone to <strong>moonwalk</strong> (or attempt to).",
+  "Get someone to <strong>march on the spot</strong> for 3 seconds.",
+  "Get someone to <strong>swap seats</strong> with someone else.",
+  "Get someone to <strong>move to a different part of the room</strong>.",
+  "Get someone to <strong>stand up and sit back down</strong> again.",
+  "Get someone to <strong>lean against a wall</strong>.",
+  "Get someone to <strong>sit on the floor</strong>.",
+
+  // Roleplay & mime
+  "Get someone to <strong>do an impression</strong> of an animal.",
+  "Get someone to <strong>pretend to conduct an orchestra</strong>.",
+  "Get someone to <strong>pretend to be on the phone</strong>.",
+  "Get someone to <strong>act out opening a door</strong>.",
+  "Get someone to <strong>pretend to eat something</strong>.",
+  "Get someone to <strong>mime driving a car</strong>.",
+  "Get someone to <strong>mime swimming</strong>.",
+  "Get someone to <strong>pretend to be a robot</strong> for 3 seconds.",
+  "Get someone to <strong>act out being a waiter</strong> taking your order.",
+  "Get someone to <strong>do an impression of a famous person</strong>.",
+  "Get someone to <strong>mime brushing their teeth</strong>.",
+  "Get someone to <strong>pretend to lift something very heavy</strong>.",
+  "Get someone to <strong>act out waking up in the morning</strong>.",
+  "Get someone to <strong>mime typing on a keyboard</strong>.",
+  "Get someone to <strong>pretend to be a news anchor</strong> for 5 seconds.",
+  "Get someone to <strong>mime taking a selfie</strong>.",
+  "Get someone to <strong>act out catching a ball</strong>.",
+  "Get someone to <strong>pretend to sneeze</strong>.",
+  "Get someone to <strong>mime knitting</strong>.",
+  "Get someone to <strong>do an impression of a teacher</strong>.",
+
+  // Social & interaction
+  "Get someone to <strong>agree to do a task for you</strong> later (e.g. make you a drink, tie your shoelace).",
+  "Get someone to <strong>compliment you</strong>.",
+  "Get someone to <strong>do a rock-paper-scissors</strong> game with you.",
+  "Get someone to <strong>hold an object</strong> you hand them for more than 5 seconds.",
+  "Get someone to <strong>tell you a joke</strong>.",
+  "Get someone to <strong>give you a recommendation</strong> (film, song, book — anything).",
+  "Get someone to <strong>teach you something</strong>, however small.",
+  "Get someone to <strong>introduce you to someone else</strong>.",
+  "Get someone to <strong>ask you a question</strong>.",
+  "Get someone to <strong>compliment someone else</strong> in front of you.",
+  "Get someone to <strong>make a bet with you</strong> (even a silly one).",
+  "Get someone to <strong>do a thumb war</strong> with you.",
+  "Get someone to <strong>agree that your opinion is correct</strong>.",
+  "Get someone to <strong>pose for a pretend photo</strong> with you.",
+  "Get someone to <strong>give you a tour</strong> of something — the room, their bag, anything.",
+  "Get someone to <strong>take your side</strong> in an argument (real or invented).",
+  "Get someone to <strong>swap something small</strong> with you temporarily.",
+  "Get someone to <strong>write or draw something</strong> for you.",
+  "Get someone to <strong>make a plan with you</strong> for something in the future.",
+  "Get someone to <strong>confess a mild preference</strong> (favourite colour, food, etc.).",
+];
+
+
+const SPECIAL = `Get them to say <strong>"what"</strong> in response to: <em>"Guess what?"</em>`;
+
+let completedSet = new Set();
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function dealNew() {
+  completedSet.clear();
+  const picked = shuffle(MISSIONS).slice(0, 5);
+  render(picked);
+}
+
+function toggleCard(idx) {
+  if (completedSet.has(idx)) {
+    completedSet.delete(idx);
+  } else {
+    completedSet.add(idx);
+  }
+  updateUI();
+}
+
+function resetCompleted() {
+  completedSet.clear();
+  updateUI();
+}
+
+function updateUI() {
+  const cards = document.querySelectorAll('.card');
+  const pips = document.querySelectorAll('.pip');
+  let active = 0;
+
+  cards.forEach((card, i) => {
+    const done = completedSet.has(i);
+    card.classList.toggle('completed', done);
+    if (pips[i]) {
+      pips[i].classList.toggle('done', done);
+      pips[i].classList.toggle('active', !done);
+    }
+    if (!done) active++;
+  });
+
+  document.getElementById('activeCount').textContent = active;
+
+  const banner = document.getElementById('gotBanner');
+  banner.classList.toggle('show', active === 0);
+}
+
+function render(missions) {
+  const stack = document.getElementById('cardStack');
+  stack.innerHTML = '';
+
+  // Build pip row
+  const pipsEl = document.getElementById('pips');
+  pipsEl.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('div');
+    p.className = 'pip active';
+    pipsEl.appendChild(p);
+  }
+
+  // Special card (always card 0 / index 5 visually at bottom, but let's put it last)
+  const allMissions = [...missions, null]; // null = special
+
+  allMissions.forEach((mission, i) => {
+    const isSpecial = mission === null;
+    const card = document.createElement('div');
+    card.className = 'card' + (isSpecial ? ' special' : '');
+    card.dataset.idx = i;
+
+    const xBtn = document.createElement('button');
+    xBtn.className = 'card-x';
+    xBtn.textContent = '✕';
+    xBtn.title = 'Mark as used';
+    xBtn.onclick = () => toggleCard(i);
+
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-number">${String(i + 1).padStart(2, '0')}</div>
+        <div class="card-content">
+          <span class="card-tag">${isSpecial ? '★ Always Active' : 'Mission'}</span>
+          <div class="card-mission">${isSpecial ? SPECIAL : mission}</div>
+        </div>
+      </div>
+    `;
+    card.appendChild(xBtn);
+    stack.appendChild(card);
+
+    // Staggered entrance
+    setTimeout(() => card.classList.add('visible'), 60 * i + 80);
+  });
+
+  document.getElementById('gotBanner').classList.remove('show');
+  document.getElementById('activeCount').textContent = 6;
+}
+
+// Initial deal
+dealNew();
+</script>
+</body>
+</html>
